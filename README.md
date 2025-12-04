@@ -18,7 +18,6 @@ A lightweight tile-based map editor built with PyQt6. Choose from multiple tiles
 ## Running the editor
 
 ```bash
-cd /Users/sui/Desktop/2025/後期/ソフトウェア工学/2dmap
 conda activate pyqt6_env
 python3 main.py
 ```
