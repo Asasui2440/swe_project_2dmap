@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # 2D Map Editor (PyQt6)
 
 A lightweight tile-based map editor built with PyQt6. Choose from multiple tilesets, paint tiles onto a customizable grid, and save/load your creations as JSON.
@@ -31,3 +32,7 @@ python3 main.py
 5. Use **File → Save Map** / **Load Map** to persist or restore your maps (JSON files).
 
 Happy mapping!
+=======
+# swe_project_2dmap
+Software Engineering Class Project: GUI application to make 2D map for RPG 
+>>>>>>> af3e014d113faa6d5af0f8a67122dd25e58f098a
