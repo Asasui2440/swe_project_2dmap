@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 # QtGui から QAction をインポートするように修正！
-from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QAction
+from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QAction, QMouseEvent
 
 # ↑ QAction はここからインポート
 from PyQt6.QtCore import Qt, QRect
@@ -33,6 +33,7 @@ class MapWidget(QWidget):
 
         self.update_dimensions()
         self.setMouseTracking(True)  # マウス移動をトラッキング
+        self.dragging = False  # ドラッグ状態の初期化
 
     def update_dimensions(self):
         """現在のマップサイズに合わせてウィジェットの大きさを再設定"""
@@ -65,18 +66,27 @@ class MapWidget(QWidget):
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawRect(rect)
 
-    def mousePressEvent(self, event):
-        """マウスが押されたときのイベントハンドラ"""
+    def mousePressEvent(self, event: QMouseEvent):
         if event.button() == Qt.MouseButton.LeftButton:
-            # クリック座標からグリッド座標を計算
-            grid_x = event.pos().x() // self.map_data.tile_size
-            grid_y = event.pos().y() // self.map_data.tile_size
+            self.dragging = True  # ドラッグ開始
+            self._update_tile(event)
 
-            # Controllerを呼び出してModelを更新
-            self.controller.place_tile(grid_x, grid_y)
+    def mouseMoveEvent(self, event: QMouseEvent):
+        if self.dragging:  # ドラッグ中のみ処理
+            self._update_tile(event)
 
-            # 描画を更新
-            self.update()
+    def mouseReleaseEvent(self, event: QMouseEvent):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.dragging = False  # ドラッグ終了
+
+    def _update_tile(self, event: QMouseEvent):
+        """マウスイベントからタイルを更新"""
+        x = event.position().x() // self.map_data.tile_size
+        y = event.position().y() // self.map_data.tile_size
+
+        if 0 <= x < self.map_data.width and 0 <= y < self.map_data.height:
+            self.map_data.set_tile_id(int(x), int(y), self.map_data.current_tile_id)
+            self.update()  # 再描画
 
 
 # --- MainWindow: アプリケーションのメインフレーム ---
@@ -163,6 +173,8 @@ class MainWindow(QMainWindow):
         self._create_actions()
         self._create_menus()
         self._initialize_controls()
+        self.load_tile_button = QPushButton("Load Tile")
+        control_layout.addWidget(self.load_tile_button)
 
     def _create_actions(self):
         # 保存アクション
