@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QAbstractButton,
 )
 from PyQt6.QtGui import QAction
+from PyQt6.QtCore import Qt, QTimer
 from .map_widget import MapWidget
 
 
@@ -33,12 +34,22 @@ class MainWindow(QMainWindow):
         # レイアウト
         main_layout = QGridLayout(main_widget)
 
-        # 1. マップ表示エリア
+        # 1. マップ表示エリア (スクロール可能にする)
+        self.map_scroll_area = QScrollArea()
+        self.map_scroll_area.setWidgetResizable(False)
+        self.map_scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
+        self.map_scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded
+        )
         self.map_widget = MapWidget(self.controller.map_data, self.controller)
-        main_layout.addWidget(self.map_widget, 0, 0, 1, 1)  # (行, 列, 縦幅, 横幅)
+        self.map_scroll_area.setWidget(self.map_widget)
+        main_layout.addWidget(self.map_scroll_area, 0, 0, 1, 1)
 
         # 2. タイルセット選択エリア
         control_panel = QWidget()
+        control_panel.setMaximumWidth(300)  # 幅を制限
         control_layout = QVBoxLayout(control_panel)
 
         # タイルセット切り替え
@@ -100,11 +111,20 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(control_panel, 0, 1, 1, 1)
 
+        # レイアウトのストレッチ設定 (マップエリアを優先的に広げる)
+        main_layout.setColumnStretch(0, 1)
+        main_layout.setColumnStretch(1, 0)
+
         self._create_actions()
         self._create_menus()
         self._initialize_controls()
         self.load_tile_button = QPushButton("Load Tile")
         control_layout.addWidget(self.load_tile_button)
+
+        # Timer to enforce scrollbar policies
+        self.scrollbar_timer = QTimer(self)
+        self.scrollbar_timer.timeout.connect(self._enforce_scrollbar_policies)
+        self.scrollbar_timer.start(1000)  # Check every 1 second
 
     def _create_actions(self):
         # 保存アクション
@@ -126,8 +146,8 @@ class MainWindow(QMainWindow):
         self.map_widget.update_dimensions()
         self.map_widget.update()  # 再描画を要求
 
-        # レイアウトを更新してサイズ変更を反映
-        self.centralWidget().layout().update()
+        # スクロールエリアの更新が必要な場合があるため
+        self.map_scroll_area.update()
 
         # スピンボックスの値も反映
         self._sync_dimension_controls()
@@ -209,3 +229,20 @@ class MainWindow(QMainWindow):
         """外部から呼び出してUI全体をModelに同期させる"""
         self._populate_tileset_combo()
         self.update_map_widget()
+
+        # Enforce scroll policies during mouse movement or updates
+        self.map_scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.map_scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+
+    def _enforce_scrollbar_policies(self):
+        """Ensure scrollbars remain visible by reapplying policies."""
+        self.map_scroll_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
+        self.map_scroll_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
+        )
