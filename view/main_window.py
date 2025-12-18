@@ -238,6 +238,8 @@ class MainWindow(QMainWindow):
             Qt.ScrollBarPolicy.ScrollBarAlwaysOn
         )
 
+    # スクロールバーが表示されるかは、Macの設定による場合がある
+    # Macの設定(外観)から"常にスクロールバーを表示"を選ぶとスクロールバーが表示される
     def _enforce_scrollbar_policies(self):
         """Ensure scrollbars remain visible by reapplying policies."""
         self.map_scroll_area.setHorizontalScrollBarPolicy(
