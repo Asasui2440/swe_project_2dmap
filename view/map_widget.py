@@ -20,6 +20,7 @@ class MapWidget(QWidget):
             self.map_data.width * self.map_data.tile_size,
             self.map_data.height * self.map_data.tile_size,
         )
+        self.updateGeometry()
 
     def paintEvent(self, event):
         """描画処理。Modelのデータに基づいてタイルとグリッドを描画"""
