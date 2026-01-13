@@ -82,6 +82,25 @@ class MapEditorController:
         self.main_window.show()
         sys.exit(self.app.exec())
 
+    def load_external_tile(self):
+        """外部画像を選んで、タイルとして追加する"""
+        file_path, _ = QFileDialog.getOpenFileName(
+            self.main_window,
+            "Load Tile Image",
+            "",
+            "Image Files (*.png *.jpg *.jpeg *.bmp *.gif)"
+        )
+        if not file_path:
+            return
+
+        try:
+            new_id = self.map_data.add_external_tile(file_path, tileset_name="外部")
+            # 追加したタイルセットへ切替＆選択
+            self.map_data.set_current_tileset("外部")
+            self.map_data.set_current_tile(new_id)
+            self.main_window.refresh_from_model()
+        except Exception as e:
+            QMessageBox.critical(self.main_window, "Error", f"Failed to load tile: {e}")
 
 if __name__ == "__main__":
     editor = MapEditorController()

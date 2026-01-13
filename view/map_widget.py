@@ -1,5 +1,5 @@
 from PyQt6.QtWidgets import QWidget
-from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QMouseEvent
+from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QMouseEvent, QPixmap
 from PyQt6.QtCore import Qt, QRect
 
 
@@ -9,6 +9,7 @@ class MapWidget(QWidget):
         super().__init__()
         self.map_data = map_data
         self.controller = controller
+        self._pixmap_cache: dict[tuple[str, int], QPixmap] = {}
 
         self.update_dimensions()
         self.setMouseTracking(True)  # マウス移動をトラッキング
@@ -37,10 +38,29 @@ class MapWidget(QWidget):
 
                 # タイルの描画
                 tile_def = self.map_data.get_tile_definition(tile_id)
-                color_value = tile_def["color"] if tile_def else "#000000"
-                color = QColor(color_value)
-                painter.setBrush(QBrush(color))
-                painter.drawRect(rect)
+                if tile_def and tile_def.get("image"):
+                    path = tile_def["image"]
+                    key = (path, ts)
+                    pix = self._pixmap_cache.get(key)
+                    if pix is None:
+                        original = QPixmap(path)
+                        if not original.isNull():
+                            pix = original.scaled(ts, ts, Qt.AspectRatioMode.IgnoreAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                        else:
+                            pix = QPixmap()
+                        self._pixmap_cache[key] = pix
+
+                    if not pix.isNull():
+                        painter.drawPixmap(rect, pix)
+                    else:
+                        painter.setBrush(QBrush(QColor("#000000")))
+                        painter.drawRect(rect)
+                else:
+                    color_value = tile_def["color"] if tile_def else "#000000"
+                    painter.setBrush(QBrush(QColor(color_value)))
+                    painter.drawRect(rect)
+
+
 
                 # グリッド線の描画 (タイルの四隅を描くことで実現)
                 painter.setBrush(Qt.BrushStyle.NoBrush)

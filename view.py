@@ -18,7 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 # QtGui から QAction をインポートするように修正！
-from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QAction, QMouseEvent
+from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QAction, QMouseEvent, QPixmap
 
 # ↑ QAction はここからインポート
 from PyQt6.QtCore import Qt, QRect
@@ -34,6 +34,7 @@ class MapWidget(QWidget):
         self.update_dimensions()
         self.setMouseTracking(True)  # マウス移動をトラッキング
         self.dragging = False  # ドラッグ状態の初期化
+        self.image_cache = {}  # 画像キャッシュ
 
     def update_dimensions(self):
         """現在のマップサイズに合わせてウィジェットの大きさを再設定"""
@@ -57,10 +58,27 @@ class MapWidget(QWidget):
 
                 # タイルの描画
                 tile_def = self.map_data.get_tile_definition(tile_id)
-                color_value = tile_def["color"] if tile_def else "#000000"
-                color = QColor(color_value)
-                painter.setBrush(QBrush(color))
-                painter.drawRect(rect)
+                image_drawn = False
+
+                if tile_def and tile_def.get("image"):
+                    image_path = tile_def["image"]
+                    if image_path not in self.image_cache:
+                        pix = QPixmap(image_path)
+                        self.image_cache[image_path] = pix
+                        print(f"DEBUG: Loading image for tile {tile_id}: {image_path}, Null? {pix.isNull()}")
+                    
+                    pixmap = self.image_cache[image_path]
+                    if not pixmap.isNull():
+                        painter.drawPixmap(rect, pixmap)
+                        image_drawn = True
+                    else:
+                        print(f"DEBUG: Cached pixmap is null for {image_path}")
+
+                if not image_drawn:
+                    color_value = tile_def["color"] if tile_def else "#000000"
+                    color = QColor(color_value)
+                    painter.setBrush(QBrush(color))
+                    painter.drawRect(rect)
 
                 # グリッド線の描画 (タイルの四隅を描くことで実現)
                 painter.setBrush(Qt.BrushStyle.NoBrush)

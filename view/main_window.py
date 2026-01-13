@@ -15,8 +15,9 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QAbstractButton,
 )
-from PyQt6.QtGui import QAction
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QAction, QIcon, QPixmap
+from PyQt6.QtCore import Qt, QTimer, QSize
+
 from .map_widget import MapWidget
 
 
@@ -119,7 +120,9 @@ class MainWindow(QMainWindow):
         self._create_menus()
         self._initialize_controls()
         self.load_tile_button = QPushButton("Load Tile")
+        self.load_tile_button.clicked.connect(self.controller.load_external_tile)
         control_layout.addWidget(self.load_tile_button)
+
 
         # Timer to enforce scrollbar policies
         self.scrollbar_timer = QTimer(self)
@@ -189,9 +192,19 @@ class MainWindow(QMainWindow):
             button = QPushButton(tile["name"])
             button.setCheckable(True)
             button.setMinimumHeight(40)
-            button.setStyleSheet(
-                f"background-color: {tile['color']}; border: 2px solid #444; color: white;"
-            )
+
+    # ★ここから分岐：画像タイルかどうか
+            if tile.get("image"):
+                pix = QPixmap(tile["image"])
+                if not pix.isNull():
+                    button.setIcon(QIcon(pix))
+                    button.setIconSize(QSize(32, 32))
+        # 画像のときは背景色指定しない（してもいいけど崩れやすい）
+                button.setStyleSheet("border: 2px solid #444;")
+            else:
+                button.setStyleSheet(
+                    f"background-color: {tile['color']}; border: 2px solid #444; color: white;"
+                )
             button.clicked.connect(
                 lambda checked, tile_id=tile["id"]: self.on_tile_selected(tile_id)
             )

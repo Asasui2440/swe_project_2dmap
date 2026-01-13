@@ -132,3 +132,31 @@ class MapData:
         for tiles in self.tile_sets.values():
             for tile in tiles:
                 self.tile_lookup[tile["id"]] = tile
+
+    def _next_tile_id(self) -> int:
+        """既存のタイルIDと衝突しない新しいIDを返す"""
+        if not hasattr(self, "tile_lookup") or not self.tile_lookup:
+            self._rebuild_tile_lookup()
+        return max(self.tile_lookup.keys(), default=-1) + 1
+
+    def add_external_tile(
+        self,
+        image_path: str,
+        name: str = None,
+        tileset_name: str = "外部",
+    ) -> int:
+        """外部画像1枚を1タイルとして追加する。追加したタイルIDを返す"""
+        tile_id = self._next_tile_id()
+        tile = {
+            "id": tile_id,
+            "name": name or f"Custom{tile_id}",
+            # 既存の描画/UIが color を前提にしているのでフォールバック用
+            "color": "#000000",
+            "image": image_path,
+        }
+        if tileset_name not in self.tile_sets:
+            self.tile_sets[tileset_name] = []
+        self.tile_sets[tileset_name].append(tile)
+        self.tile_lookup[tile_id] = tile
+        return tile_id
+
