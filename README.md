@@ -13,8 +13,21 @@ A lightweight tile-based map editor built with PyQt6. Choose from multiple tiles
 ## Requirements
 
 - Python 3.12+
-- PyQt6 (install via `pip install PyQt6`)
+- PyQt6
 
+### Environment Setup
+
+Run the following commands to set up the environment:
+
+```bash
+# 1. Python 3.12 で環境を作成
+conda create -n pyqt6_env python=3.12 -y
+
+# 2. 作成した環境を有効化
+conda activate pyqt6_env
+
+# 3. PyQt6 をインストール
+pip install PyQt6
 ## Running the editor
 
 ```bash
