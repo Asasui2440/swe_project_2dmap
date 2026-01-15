@@ -80,12 +80,12 @@ class MainWindow(QMainWindow):
 
         self.width_spin = QSpinBox()
         self.width_spin.setRange(5, 100)
-        self.width_spin.setSuffix(" 幅")
+        size_layout.addWidget(QLabel("幅"))
         size_layout.addWidget(self.width_spin)
 
         self.height_spin = QSpinBox()
         self.height_spin.setRange(5, 100)
-        self.height_spin.setSuffix(" 高")
+        size_layout.addWidget(QLabel("高さ"))
         size_layout.addWidget(self.height_spin)
 
         resize_button = QPushButton("サイズ変更")
@@ -122,7 +122,6 @@ class MainWindow(QMainWindow):
         self.load_tile_button = QPushButton("Load Tile")
         self.load_tile_button.clicked.connect(self.controller.load_external_tile)
         control_layout.addWidget(self.load_tile_button)
-
 
         # Timer to enforce scrollbar policies
         self.scrollbar_timer = QTimer(self)
@@ -193,13 +192,13 @@ class MainWindow(QMainWindow):
             button.setCheckable(True)
             button.setMinimumHeight(40)
 
-    # ★ここから分岐：画像タイルかどうか
+            # ★ここから分岐：画像タイルかどうか
             if tile.get("image"):
                 pix = QPixmap(tile["image"])
                 if not pix.isNull():
                     button.setIcon(QIcon(pix))
                     button.setIconSize(QSize(32, 32))
-        # 画像のときは背景色指定しない（してもいいけど崩れやすい）
+                # 画像のときは背景色指定しない（してもいいけど崩れやすい）
                 button.setStyleSheet("border: 2px solid #444;")
             else:
                 button.setStyleSheet(
