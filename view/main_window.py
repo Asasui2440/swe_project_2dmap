@@ -29,48 +29,48 @@ class TilesetSplitDialog(QDialog):
     """タイルセット分割設定ダイアログ"""
     def __init__(self, parent=None, image_width=100, image_height=100):
         super().__init__(parent)
-        self.setWindowTitle("Split Tileset")
+        self.setWindowTitle("タイルセット分割")
         self.image_width = image_width
         self.image_height = image_height
-        
+
         layout = QVBoxLayout(self)
-        
-        info_label = QLabel(f"Image Size: {image_width} x {image_height} px")
+
+        info_label = QLabel(f"画像サイズ: {image_width} x {image_height} px")
         layout.addWidget(info_label)
-        
+
         form_layout = QFormLayout()
-        
+
         self.h_spin = QSpinBox()
         self.h_spin.setRange(1, 10000)
-        self.h_spin.setValue(10) # Default
+        self.h_spin.setValue(10)
         self.h_spin.valueChanged.connect(self._update_preview)
-        
+
         self.v_spin = QSpinBox()
         self.v_spin.setRange(1, 10000)
-        self.v_spin.setValue(10) # Default
+        self.v_spin.setValue(10)
         self.v_spin.valueChanged.connect(self._update_preview)
 
-        form_layout.addRow("Horizontal Div (Cols):", self.h_spin)
-        form_layout.addRow("Vertical Div (Rows):", self.v_spin)
-        
+        form_layout.addRow("横の分割数:", self.h_spin)
+        form_layout.addRow("縦の分割数:", self.v_spin)
+
         layout.addLayout(form_layout)
-        
+
         self.preview_label = QLabel("")
         layout.addWidget(self.preview_label)
-        
+
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         button_box.accepted.connect(self.accept)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
-        
+
         self._update_preview()
-        
+
     def _update_preview(self):
         h = self.h_spin.value()
         v = self.v_spin.value()
         tile_w = self.image_width // h
         tile_h = self.image_height // v
-        self.preview_label.setText(f"Tile Size: {tile_w} x {tile_h} px")
+        self.preview_label.setText(f"タイルサイズ: {tile_w} x {tile_h} px")
         
     def get_values(self):
         return self.h_spin.value(), self.v_spin.value()
