@@ -15,11 +15,65 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QAbstractButton,
     QSizePolicy,
+    QDialog,
+    QFormLayout,
+    QDialogButtonBox,
 )
 from PyQt6.QtGui import QAction, QIcon, QPixmap
 from PyQt6.QtCore import Qt, QSize
 
 from .map_widget import MapWidget
+
+
+class TilesetSplitDialog(QDialog):
+    """タイルセット分割設定ダイアログ"""
+    def __init__(self, parent=None, image_width=100, image_height=100):
+        super().__init__(parent)
+        self.setWindowTitle("Split Tileset")
+        self.image_width = image_width
+        self.image_height = image_height
+        
+        layout = QVBoxLayout(self)
+        
+        info_label = QLabel(f"Image Size: {image_width} x {image_height} px")
+        layout.addWidget(info_label)
+        
+        form_layout = QFormLayout()
+        
+        self.h_spin = QSpinBox()
+        self.h_spin.setRange(1, 10000)
+        self.h_spin.setValue(10) # Default
+        self.h_spin.valueChanged.connect(self._update_preview)
+        
+        self.v_spin = QSpinBox()
+        self.v_spin.setRange(1, 10000)
+        self.v_spin.setValue(10) # Default
+        self.v_spin.valueChanged.connect(self._update_preview)
+
+        form_layout.addRow("Horizontal Div (Cols):", self.h_spin)
+        form_layout.addRow("Vertical Div (Rows):", self.v_spin)
+        
+        layout.addLayout(form_layout)
+        
+        self.preview_label = QLabel("")
+        layout.addWidget(self.preview_label)
+        
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        button_box.accepted.connect(self.accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+        
+        self._update_preview()
+        
+    def _update_preview(self):
+        h = self.h_spin.value()
+        v = self.v_spin.value()
+        tile_w = self.image_width // h
+        tile_h = self.image_height // v
+        self.preview_label.setText(f"Tile Size: {tile_w} x {tile_h} px")
+        
+    def get_values(self):
+        return self.h_spin.value(), self.v_spin.value()
 
 
 # --- MainWindow: アプリケーションのメインフレーム ---
@@ -124,6 +178,10 @@ class MainWindow(QMainWindow):
         self.load_tile_button.clicked.connect(self.controller.load_external_tile)
         control_layout.addWidget(self.load_tile_button)
 
+        self.load_tileset_button = QPushButton("Load Tileset")
+        self.load_tileset_button.clicked.connect(self.controller.load_external_tileset)
+        control_layout.addWidget(self.load_tileset_button)
+
     def _create_actions(self):
         # 保存アクション
         self.save_action = QAction("&Save Map", self)
@@ -187,6 +245,8 @@ class MainWindow(QMainWindow):
 
             # ★ここから分岐：画像タイルかどうか
             if tile.get("image"):
+                button.setText("")  # 画像がある場合はテキストを非表示
+                button.setToolTip(tile["name"])  # ツールチップで名前を表示
                 pix = QPixmap(tile["image"])
                 if not pix.isNull():
                     button.setIcon(QIcon(pix))
