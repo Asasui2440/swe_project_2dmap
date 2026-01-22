@@ -1,4 +1,15 @@
 import sys
+import os
+
+# PyQt6のパスを設定（Anaconda環境での競合を回避）
+_pyqt6_path = os.path.join(
+    os.path.dirname(sys.executable),
+    '..', 'lib', f'python{sys.version_info.major}.{sys.version_info.minor}',
+    'site-packages', 'PyQt6', 'Qt6'
+)
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(_pyqt6_path, 'plugins', 'platforms')
+os.environ['QT_PLUGIN_PATH'] = os.path.join(_pyqt6_path, 'plugins')
+os.environ['DYLD_FRAMEWORK_PATH'] = os.path.join(_pyqt6_path, 'lib')
 
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 
