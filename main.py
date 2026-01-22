@@ -1,6 +1,5 @@
 import sys
 import os
-<<<<<<< HEAD
 
 # PyQt6のパスを設定（Anaconda環境での競合を回避）
 _pyqt6_path = os.path.join(
@@ -11,8 +10,6 @@ _pyqt6_path = os.path.join(
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = os.path.join(_pyqt6_path, 'plugins', 'platforms')
 os.environ['QT_PLUGIN_PATH'] = os.path.join(_pyqt6_path, 'plugins')
 os.environ['DYLD_FRAMEWORK_PATH'] = os.path.join(_pyqt6_path, 'lib')
-=======
->>>>>>> 2c38f304bb42c03251a3a3c61bc214a2bd90e605
 
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox
 from PyQt6.QtGui import QImage
@@ -21,6 +18,7 @@ from PyQt6.QtGui import QImage
 # 自身の作成したモジュールをインポート
 from model import MapData
 from view import MainWindow
+from view.main_window import TilesetSplitDialog
 
 
 # Controller的な役割を担うクラス
@@ -118,7 +116,7 @@ class MapEditorController:
             QMessageBox.critical(self.main_window, "Error", f"Failed to load tile: {e}")
 
     def load_external_tileset(self):
-        """外部画像を読み込み、タイルサイズで分割して一括追加する"""
+        """外部画像を読み込み、ユーザーが指定した分割数で分割して一括追加する"""
         file_path, _ = QFileDialog.getOpenFileName(
             self.main_window,
             "Load Tileset Image",
@@ -134,9 +132,17 @@ class MapEditorController:
             if image.isNull():
                 raise Exception("Failed to load image.")
 
-            tile_size = self.map_data.tile_size
             width = image.width()
             height = image.height()
+
+            # 分割数を選択するダイアログを表示
+            dialog = TilesetSplitDialog(self.main_window, width, height)
+            if dialog.exec() != dialog.DialogCode.Accepted:
+                return  # キャンセルされた場合
+
+            h_div, v_div = dialog.get_values()
+            tile_width = width // h_div
+            tile_height = height // v_div
 
             # 保存先ディレクトリ
             save_dir = "tiles"
@@ -149,30 +155,24 @@ class MapEditorController:
             # タイル分割処理
             new_tile_id = -1
             count = 0
-            
-            # 追加したタイルセットへ切替（最初の一回だけ）
-            # まだ登録されていない場合は add_external_tile が内部で作成してくれるが、
-            # まとめて追加するので名前だけ確保したいところだが、
-            # ここではシンプルに add_external_tile をループで呼ぶ
-            
-            for y in range(0, height, tile_size):
-                for x in range(0, width, tile_size):
-                    # 画像の範囲外にはみ出す場合はスキップ（あるいは調整）
-                    if x + tile_size > width or y + tile_size > height:
-                        continue
-                        
+
+            for row in range(v_div):
+                for col in range(h_div):
+                    x = col * tile_width
+                    y = row * tile_height
+
                     # 切り出し
-                    tile_image = image.copy(x, y, tile_size, tile_size)
-                    
+                    tile_image = image.copy(x, y, tile_width, tile_height)
+
                     # 保存
-                    tile_filename = f"{base_name}_{x}_{y}.png"
+                    tile_filename = f"{base_name}_{row}_{col}.png"
                     tile_path = os.path.join(save_dir, tile_filename)
                     tile_image.save(tile_path)
-                    
+
                     # モデルに追加
                     new_id = self.map_data.add_external_tile(
-                        os.path.abspath(tile_path), 
-                        name=f"{base_name}_{count}", 
+                        os.path.abspath(tile_path),
+                        name=f"{base_name}_{count}",
                         tileset_name=tileset_name
                     )
                     if new_tile_id == -1:
@@ -185,12 +185,12 @@ class MapEditorController:
                     self.map_data.set_current_tile(new_tile_id)
                 self.main_window.refresh_from_model()
                 QMessageBox.information(
-                    self.main_window, 
-                    "Success", 
-                    f"Successfully loaded {count} tiles from key {tileset_name}."
+                    self.main_window,
+                    "Success",
+                    f"Successfully loaded {count} tiles ({h_div}x{v_div}) from {tileset_name}."
                 )
             else:
-                 QMessageBox.warning(self.main_window, "Warning", "No tiles were generated. Check image size.")
+                QMessageBox.warning(self.main_window, "Warning", "No tiles were generated.")
 
         except Exception as e:
             QMessageBox.critical(self.main_window, "Error", f"Failed to load tileset: {e}")
