@@ -1,5 +1,5 @@
-from PyQt6.QtWidgets import QWidget
-from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QMouseEvent, QPixmap
+from PyQt6.QtWidgets import QWidget, QSizePolicy
+from PyQt6.QtGui import QPainter, QBrush, QColor, QPen, QMouseEvent, QPixmap, QResizeEvent
 from PyQt6.QtCore import Qt, QRect
 
 
@@ -10,23 +10,40 @@ class MapWidget(QWidget):
         self.map_data = map_data
         self.controller = controller
         self._pixmap_cache: dict[tuple[str, int], QPixmap] = {}
+        self._current_tile_size = self.map_data.tile_size  # 動的なタイルサイズ
 
-        self.update_dimensions()
         self.setMouseTracking(True)  # マウス移動をトラッキング
         self.dragging = False  # ドラッグ状態の初期化
 
+        # サイズポリシーを設定（ウィンドウに合わせて拡大縮小）
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.setMinimumSize(100, 100)
+
     def update_dimensions(self):
-        """現在のマップサイズに合わせてウィジェットの大きさを再設定"""
-        self.setFixedSize(
-            self.map_data.width * self.map_data.tile_size,
-            self.map_data.height * self.map_data.tile_size,
-        )
-        self.updateGeometry()
+        """現在のマップサイズに合わせてタイルサイズを再計算"""
+        self._calculate_tile_size()
+        self.update()
+
+    def _calculate_tile_size(self):
+        """ウィジェットのサイズからタイルサイズを計算"""
+        if self.map_data.width > 0 and self.map_data.height > 0:
+            # ウィジェットのサイズに収まるようにタイルサイズを計算
+            tile_width = self.width() // self.map_data.width
+            tile_height = self.height() // self.map_data.height
+            # 正方形のタイルを維持するため、小さい方を使用
+            self._current_tile_size = max(8, min(tile_width, tile_height))  # 最小8px
+
+    def resizeEvent(self, event: QResizeEvent):
+        """ウィジェットのリサイズ時にタイルサイズを再計算"""
+        self._calculate_tile_size()
+        # キャッシュをクリア（サイズが変わったため）
+        self._pixmap_cache.clear()
+        super().resizeEvent(event)
 
     def paintEvent(self, event):
         """描画処理。Modelのデータに基づいてタイルとグリッドを描画"""
         painter = QPainter(self)
-        ts = self.map_data.tile_size
+        ts = self._current_tile_size
 
         # グリッド線用のペン
         painter.setPen(QPen(QColor(100, 100, 100), 1))
@@ -60,8 +77,6 @@ class MapWidget(QWidget):
                     painter.setBrush(QBrush(QColor(color_value)))
                     painter.drawRect(rect)
 
-
-
                 # グリッド線の描画 (タイルの四隅を描くことで実現)
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawRect(rect)
@@ -81,9 +96,12 @@ class MapWidget(QWidget):
 
     def _update_tile(self, event: QMouseEvent):
         """マウスイベントからタイルを更新"""
-        x = event.position().x() // self.map_data.tile_size
-        y = event.position().y() // self.map_data.tile_size
+        ts = self._current_tile_size
+        if ts <= 0:
+            return
+        x = int(event.position().x() // ts)
+        y = int(event.position().y() // ts)
 
         if 0 <= x < self.map_data.width and 0 <= y < self.map_data.height:
-            self.map_data.set_tile_id(int(x), int(y), self.map_data.current_tile_id)
+            self.map_data.set_tile_id(x, y, self.map_data.current_tile_id)
             self.update()  # 再描画

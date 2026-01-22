@@ -14,9 +14,10 @@ from PyQt6.QtWidgets import (
     QButtonGroup,
     QScrollArea,
     QAbstractButton,
+    QSizePolicy,
 )
 from PyQt6.QtGui import QAction, QIcon, QPixmap
-from PyQt6.QtCore import Qt, QTimer, QSize
+from PyQt6.QtCore import Qt, QSize
 
 from .map_widget import MapWidget
 
@@ -27,6 +28,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Simple RPG Map Editor (PyQt6 Demo)")
         self.controller = controller
+        self.setMinimumSize(600, 400)  # ウィンドウの最小サイズを設定
 
         # メインコンテナウィジェット
         main_widget = QWidget()
@@ -35,22 +37,17 @@ class MainWindow(QMainWindow):
         # レイアウト
         main_layout = QGridLayout(main_widget)
 
-        # 1. マップ表示エリア (スクロール可能にする)
-        self.map_scroll_area = QScrollArea()
-        self.map_scroll_area.setWidgetResizable(False)
-        self.map_scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
-        self.map_scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded
-        )
+        # 1. マップ表示エリア（ウィンドウサイズに合わせて拡大縮小）
         self.map_widget = MapWidget(self.controller.map_data, self.controller)
-        self.map_scroll_area.setWidget(self.map_widget)
-        main_layout.addWidget(self.map_scroll_area, 0, 0, 1, 1)
+        self.map_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.map_widget.setMinimumSize(200, 200)
+        main_layout.addWidget(self.map_widget, 0, 0, 1, 1)
 
         # 2. タイルセット選択エリア
         control_panel = QWidget()
-        control_panel.setMaximumWidth(300)  # 幅を制限
+        control_panel.setMinimumWidth(200)  # 最小幅を設定
+        control_panel.setMaximumWidth(300)  # 最大幅を制限
+        control_panel.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Expanding)
         control_layout = QVBoxLayout(control_panel)
 
         # タイルセット切り替え
@@ -115,6 +112,7 @@ class MainWindow(QMainWindow):
         # レイアウトのストレッチ設定 (マップエリアを優先的に広げる)
         main_layout.setColumnStretch(0, 1)
         main_layout.setColumnStretch(1, 0)
+        main_layout.setRowStretch(0, 1)  # 行方向もストレッチ
 
         self._create_actions()
         self._create_menus()
@@ -122,12 +120,6 @@ class MainWindow(QMainWindow):
         self.load_tile_button = QPushButton("Load Tile")
         self.load_tile_button.clicked.connect(self.controller.load_external_tile)
         control_layout.addWidget(self.load_tile_button)
-
-
-        # Timer to enforce scrollbar policies
-        self.scrollbar_timer = QTimer(self)
-        self.scrollbar_timer.timeout.connect(self._enforce_scrollbar_policies)
-        self.scrollbar_timer.start(1000)  # Check every 1 second
 
     def _create_actions(self):
         # 保存アクション
@@ -148,9 +140,6 @@ class MainWindow(QMainWindow):
         # MapWidgetのサイズと内容をModelのデータに合わせて更新
         self.map_widget.update_dimensions()
         self.map_widget.update()  # 再描画を要求
-
-        # スクロールエリアの更新が必要な場合があるため
-        self.map_scroll_area.update()
 
         # スピンボックスの値も反映
         self._sync_dimension_controls()
@@ -242,22 +231,3 @@ class MainWindow(QMainWindow):
         """外部から呼び出してUI全体をModelに同期させる"""
         self._populate_tileset_combo()
         self.update_map_widget()
-
-        # Enforce scroll policies during mouse movement or updates
-        self.map_scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
-        )
-        self.map_scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
-        )
-
-    # スクロールバーが表示されるかは、Macの設定による場合がある
-    # Macの設定(外観)から"常にスクロールバーを表示"を選ぶとスクロールバーが表示される
-    def _enforce_scrollbar_policies(self):
-        """Ensure scrollbars remain visible by reapplying policies."""
-        self.map_scroll_area.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
-        )
-        self.map_scroll_area.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn
-        )
