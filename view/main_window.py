@@ -37,11 +37,14 @@ class MainWindow(QMainWindow):
         # レイアウト
         main_layout = QGridLayout(main_widget)
 
-        # 1. マップ表示エリア（ウィンドウサイズに合わせて拡大縮小）
+        # 1. マップ表示エリア（スクロール可能）
+        self.map_scroll_area = QScrollArea()
+        self.map_scroll_area.setWidgetResizable(False)
+        self.map_scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        self.map_scroll_area.setMinimumSize(200, 200)
         self.map_widget = MapWidget(self.controller.map_data, self.controller)
-        self.map_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self.map_widget.setMinimumSize(200, 200)
-        main_layout.addWidget(self.map_widget, 0, 0, 1, 1)
+        self.map_scroll_area.setWidget(self.map_widget)
+        main_layout.addWidget(self.map_scroll_area, 0, 0, 1, 1)
 
         # 2. タイルセット選択エリア
         control_panel = QWidget()
@@ -76,12 +79,12 @@ class MainWindow(QMainWindow):
         size_layout = QHBoxLayout(size_group)
 
         self.width_spin = QSpinBox()
-        self.width_spin.setRange(5, 100)
+        self.width_spin.setRange(5, 1000)
         size_layout.addWidget(QLabel("幅"))
         size_layout.addWidget(self.width_spin)
 
         self.height_spin = QSpinBox()
-        self.height_spin.setRange(5, 100)
+        self.height_spin.setRange(5, 1000)
         size_layout.addWidget(QLabel("高さ"))
         size_layout.addWidget(self.height_spin)
 
