@@ -1,8 +1,40 @@
+# Python-related files
 __pycache__/
 *.pyc
+
+# System files
 .DS_Store
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Virtual environments
 venv/
+.env/
+.venv/
 env/
+
+# Logs and temporary files
 *.log
 *.tmp
+*.bak
+*.orig
+
+# Editor/IDE configurations
+.vscode/
+.idea/
+*.swp
+
+# Build/Distribution files
+build/
+dist/
+*.egg-info/
+
+# Test/Debug files
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Images
 *.png
+*.jpg
