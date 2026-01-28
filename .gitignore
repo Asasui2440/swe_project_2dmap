@@ -6,3 +6,4 @@ env/
 *.log
 *.tmp
 *.png
+.venv/
