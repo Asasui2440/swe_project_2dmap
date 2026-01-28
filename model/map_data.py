@@ -34,12 +34,12 @@ class MapData:
         return False
 
     def resize(self, width, height, fill_tile_id=None):
-        """マップサイズを変更。既存データを保ちながら拡張/縮小する"""
-        fill_id = fill_tile_id
-        if fill_id is None:
-            fill_id = self.tile_sets[self.current_tileset][0]["id"]
-
-        new_data = [[fill_id for _ in range(width)] for _ in range(height)]
+        """
+        マップサイズを変更。既存データを保ちながら拡張/縮小する
+        マップサイズが大きくなった場合、緑のタイルで敷き詰める
+        """
+        fill_tile_id = self.tile_sets["フィールド"][0]["id"]
+        new_data = [[fill_tile_id for _ in range(width)] for _ in range(height)]
         for y in range(min(self.height, height)):
             for x in range(min(self.width, width)):
                 new_data[y][x] = self.data[y][x]
@@ -121,7 +121,6 @@ class MapData:
         new_data = []
         for i in range(self.height):
             new_data.append(flat_data[i * self.width : (i + 1) * self.width])
-
         self.data = new_data
 
         # 成功時に True を返す (Controllerで利用)
@@ -159,4 +158,3 @@ class MapData:
         self.tile_sets[tileset_name].append(tile)
         self.tile_lookup[tile_id] = tile
         return tile_id
-
