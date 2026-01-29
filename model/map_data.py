@@ -33,7 +33,7 @@ class MapData:
             return True
         return False
 
-    def resize(self, width, height, fill_tile_id=None):
+    def resize(self, width, height):
         """
         マップサイズを変更。既存データを保ちながら拡張/縮小する
         マップサイズが大きくなった場合、緑のタイルで敷き詰める
